@@ -26,6 +26,8 @@
 【海泰发展连续三日涨停提示风险：公司没有与创投相关的收入来源】连续三日涨停的海泰发展11月12日晚间披露风险提示公告，经公司自查，谁不想做吴彦祖？公司目前生产经营活动正常。目前，公司主营业务收入和利润来源为贸易和房产租售，没有与创投相关的收入来源，也没有科技产业投资项目。公司对应2017年每股收益的市盈率为271.95倍，截至11月12日，公司动态市盈率为2442.10倍，请投资者注意投资风险。另外，谁帅过吴彦祖？
 [(5, 8, ['吴', '彦', '祖'], 'PER'), (6, 9, ['吴', '彦', '祖'], 'PER')]
 ```
+* 运行环境
+    - tensorflow[-gpu] == 1.12.0
 
 ### 数据
 
@@ -49,3 +51,50 @@ bert-ner主要依赖BERT对输入的句子进行encode，然后经过CRF层对�
 * 在预测出来结果后，text中每个词与predict_id一一对应，略过`_X`标签即可
 * 标签以`B-`, `I-`，[`E-`]为标准
 * nvidia-docker
+
+
+### Docker-Nvidia
+
+* docker18.03以下使用docker-nvidia1.0，以上使用docker-nvidia2
+
+##### 17.12.1-ce正常运行
+
+* 安装nvidia-docker1.0
+```
+yum install -y nvidia-docker
+```
+
+* 列出所有nvidia-docker volume
+    - 应该有一个
+    ```
+    nvidia-docker volume ls
+    ```
+    * 如果没有的话
+    ```shell
+    docker volume create --driver=nvidia-docker --name=nvidia_driver_$(modinfo -F version nvidia)
+    nvidia-docker volume ls
+    ```
+* 查看显卡和docker是否正常
+    - 直接输出信息
+    ```
+    nvidia-docker run --rm nvidia/cuda nvidia-smi
+    ```
+    - 进入镜像查看
+    ```sh
+    # 直接查看失败的话进入镜像运行
+    nvidia-docker run -it -p 8888:8888 --name ten tensorflow/tensorflow:0.11.0rc0-gpu  /bin/sh
+    nvidia-smi
+    python
+    >>> import tensorflow as tf
+    >>> tf.test.is_gpu_available()
+    ```
+
+* 构建容器
+```
+nvidia-docker build  --network host -t service:bert .
+```
+
+* 运行容器
+```
+nvidia-docker run --network host -it --rm -p 1234:1234 -v data:data  service:bert /bin/bash
+```
